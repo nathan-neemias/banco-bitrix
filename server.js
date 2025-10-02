@@ -46,6 +46,7 @@ const BITRIX_CONFIG = {
 // Função para limpar CNPJ
 function cleanCNPJ(cnpj) {
   if (!cnpj) return null;
+  // Remove tudo que não é número
   return cnpj.replace(/[^\d]/g, '');
 }
 
@@ -53,10 +54,19 @@ function cleanCNPJ(cnpj) {
 function formatCNPJ(cnpj) {
   if (!cnpj) return null;
   const cleaned = cleanCNPJ(cnpj);
+  
+  // Se tem 14 dígitos, formata como CNPJ
   if (cleaned.length === 14) {
-    return cleaned.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    return cleaned.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
   }
-  return cleaned;
+  
+  // Se tem 11 dígitos, formata como CPF
+  if (cleaned.length === 11) {
+    return cleaned.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+  }
+  
+  // Se não tem tamanho correto, retorna como está
+  return cnpj;
 }
 
 // Função para buscar dados PGFN no banco
@@ -86,7 +96,7 @@ async function getPGFNData(cnpj) {
           false as tem_impugnacao,
           false as tem_beneficio
         FROM convencional_sn 
-        WHERE cnpj = $1 OR cnpj = $2
+        WHERE cnpj = $1
         
         UNION ALL
         
@@ -128,7 +138,6 @@ async function getPGFNData(cnpj) {
         BOOL_OR(tem_impugnacao) as tem_impugnacao,
         BOOL_OR(tem_beneficio) as tem_beneficio
       FROM dados_consolidados
-      ) AS combined_results
     `;
     
     console.log('📊 Executando query...');
@@ -226,7 +235,16 @@ app.post('/webhook/pgfn', async (req, res) => {
       
       // Formatar valores monetários
       const formatMoney = (value) => {
-        return `R$ ${parseFloat(value || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        // Converter para número e garantir 2 casas decimais
+        const numero = parseFloat(value || 0);
+        // Formatar com separador de milhares e 2 casas decimais
+        const formatado = numero.toLocaleString('pt-BR', { 
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+          style: 'decimal'
+        });
+        // Adicionar R$ e remover espaço após R$
+        return `R$ ${formatado}`.replace('R$ ', 'R$');
       };
       
       // Preparar dados formatados
@@ -251,13 +269,18 @@ app.post('/webhook/pgfn', async (req, res) => {
         return data.tem_beneficio ? "SIM" : "NÃO";
       };
 
+      // Formatar números inteiros sem casas decimais
+      const formatInt = (value) => {
+        return parseInt(value || 0).toString();
+      };
+
       const dadosReceita = {
         total_divida_ativa: formatMoney(pgfnData.total_saldo_devedor),
         execucao_fiscal_ativa: validarExecucaoFiscal(pgfnData),
         cpf_socio_responde: validarCpfSocio(pgfnData),
         transacao_impugnacao: validarTransacaoImpugnacao(pgfnData),
-        parcelamentos_5_anos: pgfnData.total_parcelamentos || 0,
-        parcelamentos_ativos: pgfnData.parcelamentos_ativos || 0,
+        parcelamentos_5_anos: formatInt(pgfnData.total_parcelamentos),
+        parcelamentos_ativos: formatInt(pgfnData.parcelamentos_ativos),
         total_parcelado: formatMoney(pgfnData.total_parcelado),
         total_saldo_devedor: formatMoney(pgfnData.total_saldo_devedor),
         possui_transacao_beneficio: validarTransacaoBeneficio(pgfnData)
@@ -296,7 +319,100 @@ app.post('/webhook/pgfn', async (req, res) => {
   }
 });
 
-// Endpoint de teste
+// Endpoint para o Make.com - dados formatados
+app.get('/api/cnpj/:cnpj', async (req, res) => {
+  try {
+    const startTime = Date.now();
+    const { cnpj } = req.params;
+    
+    console.log('='.repeat(50));
+    console.log('📥 Requisição GET para CNPJ:', cnpj);
+    console.log('⏰ Hora:', new Date().toISOString());
+    
+    if (!cnpj) {
+      return res.status(400).json({
+        success: false,
+        error: 'CNPJ é obrigatório',
+        cnpj_provided: null
+      });
+    }
+    
+    // Buscar dados PGFN
+    const pgfnData = await getPGFNData(cnpj);
+    
+    // Formatar valores monetários
+    const formatMoney = (value) => {
+      const numero = parseFloat(value || 0);
+      const formatado = numero.toLocaleString('pt-BR', { 
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        style: 'decimal'
+      });
+      return `R$ ${formatado}`.replace('R$ ', 'R$');
+    };
+    
+    // Validar dados específicos
+    const validarExecucaoFiscal = (data) => {
+      return data.parcelamentos_ativos > 0 && data.total_saldo_devedor > 0 ? "SIM" : "NÃO";
+    };
+
+    const validarCpfSocio = (data) => {
+      return data.tem_responsabilidade_socio ? "SIM" : "NÃO";
+    };
+
+    const validarTransacaoImpugnacao = (data) => {
+      return data.tem_impugnacao ? "SIM" : "NÃO";
+    };
+
+    const validarTransacaoBeneficio = (data) => {
+      return data.tem_beneficio ? "SIM" : "NÃO";
+    };
+
+    // Formatar números inteiros
+    const formatInt = (value) => {
+      return parseInt(value || 0).toString();
+    };
+
+    const dadosReceita = {
+      total_divida_ativa: formatMoney(pgfnData.total_saldo_devedor),
+      execucao_fiscal_ativa: validarExecucaoFiscal(pgfnData),
+      cpf_socio_responde: validarCpfSocio(pgfnData),
+      transacao_impugnacao: validarTransacaoImpugnacao(pgfnData),
+      parcelamentos_5_anos: formatInt(pgfnData.total_parcelamentos),
+      parcelamentos_ativos: formatInt(pgfnData.parcelamentos_ativos),
+      total_parcelado: formatMoney(pgfnData.total_parcelado),
+      total_saldo_devedor: formatMoney(pgfnData.total_saldo_devedor),
+      possui_transacao_beneficio: validarTransacaoBeneficio(pgfnData)
+    };
+    
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    
+    console.log('✅ Consulta CNPJ executada com sucesso');
+    console.log(`⏱️ Tempo total: ${duration}ms`);
+    console.log('📊 Dados encontrados:', dadosReceita);
+    console.log('='.repeat(50));
+    
+    res.json({
+      success: true,
+      cnpj_consultado: formatCNPJ(cnpj),
+      dados_receita: dadosReceita,
+      execution_time_ms: duration,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Erro na consulta CNPJ:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor',
+      details: error.message,
+      cnpj_provided: cnpj || null
+    });
+  }
+});
+
+// Endpoint de teste (legado)
 app.get('/test/:cnpj', async (req, res) => {
   try {
     const { cnpj } = req.params;
@@ -333,8 +449,9 @@ const server = app.listen(PORT, HOST, () => {
   console.log(`🔗 Endereço externo: http://167.235.49.166:${PORT}`);
   console.log(`🚀 Servidor webhook PGFN rodando na porta ${PORT}`);
   console.log(`📊 Banco: ${process.env.DB_HOST || '167.235.49.166'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'bitrix'}`);
-  console.log(`🔗 Bitrix24: ${BITRIX_CONFIG.domain}`);
+  console.log(`🔊 Bitrix24: ${BITRIX_CONFIG.domain}`);
   console.log(`📡 Webhook: http://167.235.49.166:${PORT}/webhook/pgfn`);
+  console.log(`🔍 API CNPJ: http://167.235.49.166:${PORT}/api/cnpj/CNPJ_AQUI`);
   console.log(`🧪 Teste: http://167.235.49.166:${PORT}/test/CNPJ_AQUI`);
 });
 
