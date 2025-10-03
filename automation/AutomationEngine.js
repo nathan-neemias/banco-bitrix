@@ -354,6 +354,8 @@ class AutomationEngine {
     if (!cnpj) {
       this.logger.info(`❌ Negócio ${deal.ID} sem CNPJ válido - será reprocessado no próximo ciclo`);
       this.stats.recordSkip(deal.ID, 'no_cnpj');
+      
+      // NÃO marcar como processado - manter na fila para reprocessar quando CNPJ for adicionado
       return;
     }
     
