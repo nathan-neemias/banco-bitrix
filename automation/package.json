@@ -1,0 +1,45 @@
+{
+  "name": "pgfn-automation",
+  "version": "1.0.0",
+  "description": "Automação PGFN para Bitrix24 - Sistema de atualização automática de campos fiscais",
+  "main": "run.js",
+  "scripts": {
+    "start": "node run.js",
+    "dev": "NODE_ENV=development node run.js",
+    "server": "node run.js --server",
+    "test": "node run.js --test",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop pgfn-automation",
+    "pm2:restart": "pm2 restart pgfn-automation",
+    "pm2:logs": "pm2 logs pgfn-automation",
+    "pm2:status": "pm2 status",
+    "pm2:monit": "pm2 monit",
+    "logs": "tail -f logs/automation.log",
+    "postinstall": "mkdir -p logs"
+  },
+  "keywords": [
+    "bitrix24",
+    "pgfn",
+    "automation",
+    "fiscal",
+    "cnpj",
+    "receita-federal"
+  ],
+  "author": "Villela Digital",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "uuid": "^9.0.1",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/villela-digital/pgfn-automation.git"
+  }
+}

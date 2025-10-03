@@ -96,7 +96,7 @@ async function getPGFNData(cnpj) {
           false as tem_impugnacao,
           false as tem_beneficio
         FROM convencional_sn 
-        WHERE cnpj = $1
+        WHERE cnpj = $1 OR cnpj = $2
         
         UNION ALL
         
@@ -319,7 +319,7 @@ app.post('/webhook/pgfn', async (req, res) => {
   }
 });
 
-// Endpoint para o Make.com - dados formatados
+// Endpoint para o Make.com - dados formatadosra
 app.get('/api/cnpj/:cnpj', async (req, res) => {
   try {
     const startTime = Date.now();

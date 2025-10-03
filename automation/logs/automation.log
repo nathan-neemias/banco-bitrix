@@ -1,0 +1,15 @@
+[2025-10-03T01:38:11.268Z] [INFO] 🚀 AUTOMAÇÃO INICIADA | Data: {"executionId":"5193830b-8b44-4c70-a818-d254ff30dc47","totalDeals":0}
+[2025-10-03T01:38:11.271Z] [INFO] 🔍 Verificando conexões...
+[2025-10-03T01:38:11.810Z] [INFO] ✅ Conexão com Bitrix24 OK
+[2025-10-03T01:38:12.248Z] [INFO] ✅ Conexão com API PGFN OK
+[2025-10-03T01:38:12.249Z] [INFO] 🔎 Buscando negócios na pipeline de destino...
+[2025-10-03T01:38:13.122Z] [INFO] 📊 Encontrados 9 negócios para análise
+[2025-10-03T01:38:13.122Z] [INFO] 📋 Encontrados 9 negócios para processar
+[2025-10-03T01:38:13.123Z] [INFO] 📦 Processando 1 lotes de até 10 negócios
+[2025-10-03T01:38:13.124Z] [INFO] 🔄 Processando lote 1/1 (9 negócios)
+[2025-10-03T01:38:13.356Z] [INFO] 📋 Negócio processado: 84633 | Data: {"dealId":"84633","cnpj":"N/A","success":true,"stats":{"processingTime":232}}
+[2025-10-03T01:38:14.109Z] [INFO] 📋 Negócio processado: 84793 | Data: {"dealId":"84793","cnpj":"N/A","success":true,"stats":{"processingTime":238}}
+[2025-10-03T01:38:14.841Z] [INFO] 📋 Negócio processado: 87431 | Data: {"dealId":"87431","cnpj":"N/A","success":true,"stats":{"processingTime":226}}
+[2025-10-03T01:38:15.583Z] [INFO] 📋 Negócio processado: 88095 | Data: {"dealId":"88095","cnpj":"N/A","success":true,"stats":{"processingTime":237}}
+[2025-10-03T01:38:16.310Z] [INFO] 📋 Negócio processado: 88101 | Data: {"dealId":"88101","cnpj":"N/A","success":true,"stats":{"processingTime":216}}
+[2025-10-03T01:38:17.038Z] [INFO] 📋 Negócio processado: 88105 | Data: {"dealId":"88105","cnpj":"N/A","success":true,"stats":{"processingTime":226}}
